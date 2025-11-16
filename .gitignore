@@ -1,0 +1,9 @@
+# Large / generated assets
+data/
+gifs/
+
+# Python / notebooks
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+artifacts/
