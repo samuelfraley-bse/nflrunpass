@@ -1,0 +1,248 @@
+.page {
+  min-height: 100vh;
+  background: #fafafa;
+  padding: 2rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.page-header h1 {
+  font-size: 2.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.page-header p {
+  margin: 0;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.layout {
+  width: 100%;
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: 3fr 2fr; /* 60 / 40 */
+  gap: 2rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.left-column,
+.right-column {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem 1.5rem;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.scoreboard {
+  background-color: #b71c1c;
+  color: white;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.score-label {
+  font-weight: 700;
+}
+
+.score-sep {
+  margin: 0 0.75rem;
+}
+
+.score-input-row,
+.two-col-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.field-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.field-group input {
+  padding: 0.45rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid #d0d7e2;
+  font-size: 0.95rem;
+}
+
+.field-group input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.3);
+}
+
+.subheading {
+  margin-top: 1.1rem;
+  margin-bottom: 0.4rem;
+  font-size: 1rem;
+}
+
+.divider {
+  border: none;
+  height: 1px;
+  background: #e5e7eb;
+  margin: 0.9rem 0 0.8rem;
+}
+
+.checkbox-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.checkbox input {
+  width: 1rem;
+  height: 1rem;
+}
+
+.field-layout {
+  margin-top: 0.4rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+}
+
+.field-graphic {
+  display: flex;
+  justify-content: center;
+}
+
+.field-svg {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+}
+
+/* Vertical slider */
+.field-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.slider-label {
+  font-size: 0.88rem;
+  color: #555;
+}
+
+.vertical-slider-wrapper {
+  height: 220px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.vertical-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 220px; /* will be rotated */
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  transform: rotate(-90deg);
+}
+
+/* slider thumb */
+.vertical-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #ef4444;
+  cursor: pointer;
+}
+
+.vertical-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #ef4444;
+  cursor: pointer;
+}
+
+.slider-caption {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* Right side */
+.predict-button {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 999px;
+  border: none;
+  background: #111827;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 0.75rem;
+}
+
+.predict-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.prediction-card,
+.error-card {
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  margin-top: 0.2rem;
+  font-size: 0.93rem;
+}
+
+.prediction-card {
+  background-color: #f1f8ff;
+  border: 1px solid #d0e2ff;
+}
+
+.error-card {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.prediction-title {
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.prediction-title span {
+  font-weight: 800;
+}
