@@ -1,0 +1,20 @@
+[
+  "down",
+  "ydstogo",
+  "yardline_100",
+  "game_seconds_remaining",
+  "is_red_zone",
+  "is_goal_to_go",
+  "short_ydstogo",
+  "medium_ydstogo",
+  "long_ydstogo",
+  "shotgun",
+  "no_huddle",
+  "score_differential",
+  "is_trailing",
+  "is_tied",
+  "is_leading",
+  "is_fourth_qtr",
+  "late_half",
+  "is_home_offense"
+]
