@@ -1,29 +1,84 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import joblib
+from pathlib import Path
 import json
+
+import joblib
+import pandas as pd
+import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, Circle
 
-# ---------- Page config ----------
+# -----------------------
+# Page config + styling
+# -----------------------
 st.set_page_config(
     page_title="NFL Play Call Predictor",
     layout="wide",
 )
 
-# ---------- Load artifacts ----------
+st.markdown(
+    """
+    <style>
+    .block-container {
+        max-width: 1150px;
+        padding-top: 1.5rem;
+    }
+
+    html, body, [class*="css"] {
+        font-size: 16px;
+    }
+
+    h2, h3 {
+        font-weight: 700 !important;
+    }
+
+    label, .stSlider label {
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+    }
+
+    .stTextInput input, .stNumberInput input {
+        font-size: 1rem !important;
+        padding: 0.4rem 0.6rem !important;
+    }
+
+    .prediction-card {
+        background-color: #f1f8ff;
+        border-radius: 12px;
+        padding: 0.9rem 1.1rem;
+        border: 1px solid #d0e2ff;
+        margin-top: 0.5rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# -----------------------
+# Artifact loading
+# -----------------------
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+MODELS_DIR = PROJECT_ROOT / "models"
+
+
 @st.cache_resource
 def load_artifacts():
-    model = joblib.load("log_reg_model.pkl")
-    scaler = joblib.load("scaler.pkl")
-    with open("feature_cols.json", "r") as f:
+    model_path = MODELS_DIR / "log_reg_model.pkl"
+    scaler_path = MODELS_DIR / "scaler.pkl"
+    feature_cols_path = MODELS_DIR / "feature_cols.json"
+
+    model = joblib.load(model_path)
+    scaler = joblib.load(scaler_path)
+    with feature_cols_path.open("r") as f:
         feature_cols = json.load(f)
+
     return model, scaler, feature_cols
+
 
 log_reg, scaler, FEATURE_COLS = load_artifacts()
 
-# ---------- Session state ----------
+# -----------------------
+# Session state
+# -----------------------
 if "history" not in st.session_state:
     st.session_state["history"] = []
 if "off_score" not in st.session_state:
@@ -31,48 +86,85 @@ if "off_score" not in st.session_state:
 if "def_score" not in st.session_state:
     st.session_state["def_score"] = 14
 
+# -----------------------
+# Helpers
+# -----------------------
+def draw_vertical_field(ui_pos: float):
+    """
+    Draw a vertical field:
+    bottom = OWN goal line (0)
+    top   = OPP goal line (100)
+    ui_pos is 0–100 along that axis.
+    """
+    fig, ax = plt.subplots(figsize=(3.2, 6))  # tall vertical field
 
-# ---------- Helpers ----------
-def draw_field(yardline_100: float):
-    """Compact green field with yard numbers and a ball marker."""
-    x_ball = 100 - yardline_100
-
-    fig, ax = plt.subplots(figsize=(4.8, 1.4))
-    ax.set_xlim(0, 100)
-    ax.set_ylim(0, 10)
+    # Field background
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 100)
     ax.axis("off")
 
-    field = Rectangle((0, 0), 100, 10, facecolor="#1b5e20", edgecolor="white")
+    field = Rectangle((0, 0), 10, 100, facecolor="#1b5e20", edgecolor="white")
     ax.add_patch(field)
 
-    # Major yard lines
-    for x in range(0, 101, 10):
-        ax.plot([x, x], [0, 10], color="white", linewidth=1)
-    # Minor hashes
-    for x in range(5, 100, 10):
-        ax.plot([x, x], [3, 7], color="white", linewidth=0.6)
+    # Major yard lines every 10 yards (horizontal)
+    for y in range(0, 101, 10):
+        ax.plot([0, 10], [y, y], color="white", linewidth=1)
 
-    # Midfield
-    ax.plot([50, 50], [0, 10], color="white", linewidth=2)
+    # Hash marks
+    for y in range(5, 100, 10):
+        ax.plot([2, 8], [y, y], color="white", linewidth=0.6)
 
-    # Yard numbers
-    for x in range(10, 50, 10):
-        ax.text(x, 1.3, str(x), color="white", ha="center", va="center", fontsize=7)
-        ax.text(100 - x, 1.3, str(x), color="white", ha="center", va="center", fontsize=7)
+    # Yard numbers (from each goal line perspective)
+    # Own side: 10, 20, 30, 40
+    for y in range(10, 50, 10):
+        ax.text(
+            1.2,
+            y,
+            str(y),
+            color="white",
+            ha="left",
+            va="center",
+            fontsize=7,
+        )
 
-    ax.text(5, 5, "OWN", color="white", ha="center", va="center", fontsize=7)
-    ax.text(95, 5, "OPP", color="white", ha="center", va="center", fontsize=7)
+    # Opponent side: 40, 30, 20, 10 (distance to opp goal)
+    opp_labels = [40, 30, 20, 10]
+    opp_positions = [60, 70, 80, 90]
+    for lbl, y in zip(opp_labels, opp_positions):
+        ax.text(
+            8.8,
+            y,
+            str(lbl),
+            color="white",
+            ha="right",
+            va="center",
+            fontsize=7,
+        )
 
-    ball = Circle((x_ball, 5), radius=1.2, facecolor="#ffcc80", edgecolor="black")
+    # End zone labels
+    ax.text(5, 3, "OWN", color="white", ha="center", va="center", fontsize=8)
+    ax.text(5, 97, "OPP", color="white", ha="center", va="center", fontsize=8)
+
+    # Ball
+    ball = Circle((5, ui_pos), radius=1.6, facecolor="#ffcc80", edgecolor="black")
     ax.add_patch(ball)
+
+    # Yard line text near ball
+    if ui_pos <= 50:
+        side_label = "OWN"
+        yard_label = ui_pos
+    else:
+        side_label = "OPP"
+        yard_label = 100 - ui_pos
+
     ax.text(
-        x_ball,
-        8.4,
-        f"{int(100 - yardline_100)}-yd line",
+        5,
+        ui_pos + 5 if ui_pos < 80 else ui_pos - 5,
+        f"{int(yard_label)}-yd line ({side_label})",
         color="white",
         ha="center",
         va="center",
-        fontsize=7,
+        fontsize=8,
     )
 
     fig.tight_layout()
@@ -151,7 +243,9 @@ def build_feature_vector(
     return df
 
 
-# ---------- Layout ----------
+# -----------------------
+# Layout
+# -----------------------
 st.markdown(
     "<h2 style='text-align:center; margin-bottom:0.4rem;'>🏈 NFL Play Call Predictor</h2>",
     unsafe_allow_html=True,
@@ -161,51 +255,51 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-left_col, right_col = st.columns([1.0, 1.1])
+left_col, right_col = st.columns([0.6, 0.4])
 
-# ===== LEFT: Game situation =====
+# ===== LEFT: Game situation + field =====
 with left_col:
     st.markdown("### Game situation")
 
-    # --- Compact red scoreboard ---
-    sb = st.container()
-    with sb:
-        st.markdown(
-            f"""
-            <div style="
-                background-color:#b71c1c;
-                color:white;
-                border-radius:10px;
-                padding:6px 12px;
-                text-align:center;
-                margin-bottom:6px;
-                font-size:0.95rem;
-            ">
-                <span style="font-weight:bold;">OFF</span> {st.session_state.off_score}
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                {st.session_state.def_score} <span style="font-weight:bold;">DEF</span>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    # Scoreboard bar
+    st.markdown(
+        f"""
+        <div style="
+            background-color:#b71c1c;
+            color:white;
+            border-radius:10px;
+            padding:6px 12px;
+            text-align:center;
+            margin-bottom:8px;
+            font-size:0.95rem;
+        ">
+            <span style="font-weight:bold;">OFF</span> {st.session_state.off_score}
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            {st.session_state.def_score} <span style="font-weight:bold;">DEF</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        btn_row = st.columns(4)
-        with btn_row[0]:
-            if st.button("OFF -", use_container_width=True):
-                st.session_state.off_score = max(0, st.session_state.off_score - 1)
-        with btn_row[1]:
-            if st.button("OFF +", use_container_width=True):
-                st.session_state.off_score += 1
-        with btn_row[2]:
-            if st.button("DEF -", use_container_width=True):
-                st.session_state.def_score = max(0, st.session_state.def_score - 1)
-        with btn_row[3]:
-            if st.button("DEF +", use_container_width=True):
-                st.session_state.def_score += 1
+    score_cols = st.columns(2)
+    with score_cols[0]:
+        st.session_state.off_score = st.number_input(
+            "Offense score",
+            min_value=0,
+            step=1,
+            value=st.session_state.off_score,
+        )
+    with score_cols[1]:
+        st.session_state.def_score = st.number_input(
+            "Defense score",
+            min_value=0,
+            step=1,
+            value=st.session_state.def_score,
+        )
 
     st.markdown("---")
 
-    # --- Down & distance (text boxes) ---
+    # Down & distance
     st.markdown("**Down & distance**")
     dd_cols = st.columns(2)
     with dd_cols[0]:
@@ -214,21 +308,10 @@ with left_col:
         ydstogo_text = st.text_input("Yards to go", value="5")
 
     down = parse_int(down_text, 1)
-    down = min(max(down, 1), 4)  # clamp 1–4
+    down = min(max(down, 1), 4)
     ydstogo = max(parse_int(ydstogo_text, 1), 1)
 
-    # --- Field position ---
-    st.markdown("**Field position**")
-    yardline_100 = st.slider(
-        "Distance to opponent end zone (0 = goal line, 100 = own goal line)",
-        0,
-        100,
-        60,
-    )
-    field_fig = draw_field(yardline_100)
-    st.pyplot(field_fig, use_container_width=True)
-
-    # --- Clock & context (text for quarter + game clock) ---
+    # Clock & context
     st.markdown("**Clock & context**")
     cc_cols = st.columns(2)
     with cc_cols[0]:
@@ -246,12 +329,38 @@ with left_col:
     with form_cols[2]:
         is_home_offense = st.checkbox("Offense is home", value=True)
 
+    st.markdown("**Field & position**")
+    field_col, slider_col = st.columns([0.55, 0.45])
+
+    with slider_col:
+        ui_pos = st.slider(
+            "Ball position (0–50 own, 50–100 opponent)",
+            min_value=0,
+            max_value=100,
+            value=60,
+        )
+
+        if ui_pos <= 50:
+            side_label = "OWN"
+            yard_label = ui_pos
+        else:
+            side_label = "OPP"
+            yard_label = 100 - ui_pos
+
+        st.caption(f"Ball on {side_label} {int(yard_label)}-yard line")
+
+        # Convert to yardline_100 (distance to opponent end zone) for the model
+        yardline_100 = 100 - ui_pos
+
+    with field_col:
+        field_fig = draw_vertical_field(ui_pos)
+        st.pyplot(field_fig, use_container_width=True)
 
 # ===== RIGHT: Prediction & history =====
 with right_col:
     st.markdown("### Model output")
 
-    if st.button("Predict play call"):
+    if st.button("Predict play call", use_container_width=True):
         X_example = build_feature_vector(
             down=down,
             ydstogo=ydstogo,
@@ -270,11 +379,20 @@ with right_col:
         prob_run = 1.0 - prob_pass
         pred_label = "PASS" if prob_pass >= 0.5 else "RUN"
 
-        st.markdown(f"#### Prediction: **{pred_label}**")
-        st.write(f"Pass probability: **{prob_pass:.1%}**")
-        st.write(f"Run probability: **{prob_run:.1%}**")
+        st.markdown(
+            f"""
+            <div class="prediction-card">
+                <div style="font-size:1.1rem; font-weight:700; margin-bottom:0.25rem;">
+                    Prediction: {pred_label}
+                </div>
+                <div>Pass probability: <strong>{prob_pass:.1%}</strong></div>
+                <div>Run probability: <strong>{prob_run:.1%}</strong></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-        # Short explanation
+        # Explanation bullets
         reasons = []
         if ydstogo >= 8:
             reasons.append("long yardage")
@@ -321,7 +439,15 @@ with right_col:
         with st.expander("Show raw feature vector sent to model"):
             st.dataframe(X_example.T, use_container_width=True)
     else:
-        st.info("Set up a situation on the left and click **Predict play call**.")
+        st.markdown(
+            """
+            <div class="prediction-card">
+                Set up a situation on the left and click
+                <strong>Predict play call</strong>.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     if st.session_state.history:
         st.markdown("#### Prediction history (this session)")
@@ -340,4 +466,4 @@ with right_col:
                 "P(pass)",
             ]
         ]
-        st.dataframe(hist_df, use_container_width=True, height=250)
+        st.dataframe(hist_df, use_container_width=True, height=260)
