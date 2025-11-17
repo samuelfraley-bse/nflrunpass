@@ -12,6 +12,9 @@ type PredictionResponse = {
   prob_run: number;
 };
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
 export default function Home() {
   // ----- Form state -----
   const [offScore, setOffScore] = useState(17);
@@ -72,29 +75,29 @@ export default function Home() {
       is_home_offense: isHomeOffense,
     };
 
-    try {
-      const res = await fetch("http://localhost:8000/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+ try {
+  const res = await fetch(`${API_BASE}/predict`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
 
-      if (!res.ok) {
-        throw new Error(`API error: ${res.status}`);
-      }
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status}`);
+  }
 
-      const data: PredictionResponse = await res.json();
-      setPrediction(data);
-      setPredLabel(data.prediction);
-    } catch (err: any) {
-      console.error(err);
-      setErrorMsg(
-        "Could not reach prediction API. Is your Python server running on http://localhost:8000?"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const data: PredictionResponse = await res.json();
+  setPrediction(data);
+  setPredLabel(data.prediction);
+} catch (err: any) {
+  console.error(err);
+  setErrorMsg(
+    `Could not reach prediction API. Currently configured base URL: ${API_BASE}`
+  );
+} finally {
+  setLoading(false);
+}
+
 
   // derived: label for ball position
   const sideLabel = uiPos <= 50 ? "OWN" : "OPP";

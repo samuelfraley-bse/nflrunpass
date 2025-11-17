@@ -1,20 +1,21 @@
-# api/main.py
 from pathlib import Path
 import json
+
 import joblib
 import pandas as pd
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+# Paths
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MODELS_DIR = PROJECT_ROOT / "models"
 
-app = FastAPI()
+app = FastAPI(title="NFL Play Call API")
 
-# Load artifacts once at startup
+# ---- Load artifacts once at startup ----
 model = joblib.load(MODELS_DIR / "log_reg_model.pkl")
 scaler = joblib.load(MODELS_DIR / "scaler.pkl")
-with (MODELS_DIR / "feature_cols.json").open() as f:
+with (MODELS_DIR / "feature_cols.json").open("r") as f:
     FEATURE_COLS = json.load(f)
 
 
@@ -31,8 +32,8 @@ class PlayRequest(BaseModel):
     is_home_offense: bool
 
 
-@app.post("/predict")
-def predict(req: PlayRequest):
+def build_feature_df(req: PlayRequest) -> pd.DataFrame:
+    """Rebuild feature vector exactly like the Streamlit / JS app."""
     score_diff = req.offense_score - req.defense_score
 
     data = {
@@ -57,12 +58,20 @@ def predict(req: PlayRequest):
     }
 
     df = pd.DataFrame([data])
+
+    # Ensure all expected columns exist and are in the right order
     for col in FEATURE_COLS:
         if col not in df.columns:
             df[col] = 0
     df = df[FEATURE_COLS]
 
-    X_scaled = scaler.transform(df)
+    return df
+
+
+@app.post("/predict")
+def predict(req: PlayRequest):
+    X = build_feature_df(req)
+    X_scaled = scaler.transform(X)
     prob_pass = float(model.predict_proba(X_scaled)[0, 1])
     prob_run = 1.0 - prob_pass
     pred_label = "PASS" if prob_pass >= 0.5 else "RUN"
@@ -72,3 +81,8 @@ def predict(req: PlayRequest):
         "prob_pass": prob_pass,
         "prob_run": prob_run,
     }
+
+
+@app.get("/")
+def root():
+    return {"status": "ok"}
