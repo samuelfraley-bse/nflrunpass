@@ -320,3 +320,86 @@
 .prediction-title span {
   font-weight: 800;
 }
+
+/* ========== Simple mobile-friendly tweaks ========== */
+
+/* Base layout: two columns on larger screens */
+.layout {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2rem;
+}
+
+/* Let columns share space nicely */
+.left-column,
+.right-column {
+  flex: 1 1 0;
+  max-width: 600px;
+}
+
+/* Make the main content not hug the edges */
+.page {
+  padding: 2rem;
+}
+
+/* Make inputs look decent by default */
+.two-col-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.field-group input,
+.checkbox-row input {
+  width: 100%;
+}
+
+/* Field layout: graphic + slider side by side on larger screens */
+.field-layout {
+  display: flex;
+  gap: 1.5rem;
+}
+
+/* ========== Mobile (phones & small tablets) ========== */
+@media (max-width: 768px) {
+  .page {
+    padding: 1rem;
+  }
+
+  /* Stack left/right columns vertically */
+  .layout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .left-column,
+  .right-column {
+    max-width: 100%;
+  }
+
+  /* Stack form controls instead of two-per-row */
+  .two-col-row {
+    flex-direction: column;
+  }
+
+  /* Make buttons full-width for easier tapping */
+  .predict-button {
+    width: 100%;
+  }
+
+  /* Stack field + slider vertically */
+  .field-layout {
+    flex-direction: column;
+  }
+
+  .field-graphic,
+  .field-slider {
+    width: 100%;
+  }
+
+  /* Give cards a bit of breathing room from edges */
+  .prediction-card,
+  .error-card {
+    margin-top: 1rem;
+  }
+}
