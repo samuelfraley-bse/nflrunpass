@@ -3,3 +3,9 @@ scikit-learn
 pandas
 numpy
 joblib
+fastapi
+uvicorn[standard]
+pandas
+numpy
+joblib
+scikit-learn
