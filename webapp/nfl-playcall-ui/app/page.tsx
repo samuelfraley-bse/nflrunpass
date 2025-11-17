@@ -54,51 +54,54 @@ export default function Home() {
     return Number.isNaN(raw) ? 600 : raw;
   };
 
-  const handlePredict = async () => {
-    setLoading(true);
-    setErrorMsg(null);
-    setPrediction(null);
-    setPredLabel(null);
+const handlePredict = async () => {
+  setLoading(true);
+  setErrorMsg(null);
+  setPrediction(null);
+  setPredLabel(null);
 
-    const secondsRemainingHalf = parseClock(clock);
-    const yardline_100 = 100 - uiPos; // same mapping as your Python app
+  const secondsRemainingHalf = parseClock(clock);
+  const yardline_100 = 100 - uiPos;
 
-    const payload = {
-      down,
-      ydstogo,
-      yardline_100,
-      offense_score: offScore,
-      defense_score: defScore,
-      qtr,
-      seconds_remaining_half: secondsRemainingHalf,
-      shotgun,
-      no_huddle: noHuddle,
-      is_home_offense: isHomeOffense,
-    };
-
-    try {
-      const res = await fetch(`${API_BASE}/predict`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        throw new Error(`API error: ${res.status}`);
-      }
-
-      const data: PredictionResponse = await res.json();
-      setPrediction(data);
-      setPredLabel(data.prediction);
-    } catch (err: any) {
-      console.error(err);
-      setErrorMsg(
-        `Could not reach prediction API. Currently configured base URL: ${API_BASE}`
-      );
-    } finally {
-      setLoading(false);
-    }
+  const payload = {
+    down,
+    ydstogo,
+    yardline_100,
+    offense_score: offScore,
+    defense_score: defScore,
+    qtr,
+    seconds_remaining_half: secondsRemainingHalf,
+    shotgun,
+    no_huddle: noHuddle,
+    is_home_offense: isHomeOffense,
   };
+
+  try {
+    const res = await fetch(`${API_BASE}/predict`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.error("API non-OK response:", res.status, text);
+      throw new Error(`API error: ${res.status}`);
+    }
+
+    const data: PredictionResponse = await res.json();
+    setPrediction(data);
+    setPredLabel(data.prediction);
+  } catch (err: any) {
+    console.error("Prediction API request failed:", err);
+    setErrorMsg(
+      `Could not reach prediction API. Currently configured base URL: ${API_BASE}`
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <main className="page">
