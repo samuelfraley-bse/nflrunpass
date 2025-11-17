@@ -4,8 +4,6 @@ import { useState } from "react";
 import Scoreboard from "@/components/Scoreboard";
 import VerticalField from "@/components/VerticalField";
 
-
-
 type PredictionResponse = {
   prediction: string;
   prob_pass: number;
@@ -38,6 +36,10 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // derived: label for ball position
+  const sideLabel = uiPos <= 50 ? "OWN" : "OPP";
+  const yardLabel = uiPos <= 50 ? uiPos : 100 - uiPos;
+
   // helpers
   const parseClock = (txt: string): number => {
     const s = txt.trim();
@@ -47,7 +49,6 @@ export default function Home() {
       const mm = parseInt(m, 10);
       const ss = parseInt(sec, 10);
       if (!Number.isNaN(mm) && !Number.isNaN(ss)) return mm * 60 + ss;
-      return 600;
     }
     const raw = parseInt(s, 10);
     return Number.isNaN(raw) ? 600 : raw;
@@ -75,33 +76,29 @@ export default function Home() {
       is_home_offense: isHomeOffense,
     };
 
- try {
-  const res = await fetch(`${API_BASE}/predict`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+    try {
+      const res = await fetch(`${API_BASE}/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-  if (!res.ok) {
-    throw new Error(`API error: ${res.status}`);
-  }
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status}`);
+      }
 
-  const data: PredictionResponse = await res.json();
-  setPrediction(data);
-  setPredLabel(data.prediction);
-} catch (err: any) {
-  console.error(err);
-  setErrorMsg(
-    `Could not reach prediction API. Currently configured base URL: ${API_BASE}`
-  );
-} finally {
-  setLoading(false);
-}
-
-
-  // derived: label for ball position
-  const sideLabel = uiPos <= 50 ? "OWN" : "OPP";
-  const yardLabel = uiPos <= 50 ? uiPos : 100 - uiPos;
+      const data: PredictionResponse = await res.json();
+      setPrediction(data);
+      setPredLabel(data.prediction);
+    } catch (err: any) {
+      console.error(err);
+      setErrorMsg(
+        `Could not reach prediction API. Currently configured base URL: ${API_BASE}`
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="page">
@@ -115,15 +112,15 @@ export default function Home() {
         <div className="left-column">
           <h2 className="section-title">Game situation</h2>
 
-{/* Scoreboard with +/- controls */}
-<Scoreboard
-  offScore={offScore}
-  defScore={defScore}
-  onChangeOff={setOffScore}
-  onChangeDef={setDefScore}
-/>
+          {/* Scoreboard with +/- controls */}
+          <Scoreboard
+            offScore={offScore}
+            defScore={defScore}
+            onChangeOff={setOffScore}
+            onChangeDef={setDefScore}
+          />
 
-<hr className="divider" />
+          <hr className="divider" />
 
           {/* Down & distance */}
           <h3 className="subheading">Down &amp; distance</h3>
@@ -136,7 +133,12 @@ export default function Home() {
                 max={4}
                 value={down}
                 onChange={(e) =>
-                  setDown(Math.min(4, Math.max(1, parseInt(e.target.value || "1", 10))))
+                  setDown(
+                    Math.min(
+                      4,
+                      Math.max(1, parseInt(e.target.value || "1", 10))
+                    )
+                  )
                 }
               />
             </div>
@@ -147,7 +149,9 @@ export default function Home() {
                 min={1}
                 value={ydstogo}
                 onChange={(e) =>
-                  setYdstogo(Math.max(1, parseInt(e.target.value || "1", 10)))
+                  setYdstogo(
+                    Math.max(1, parseInt(e.target.value || "1", 10))
+                  )
                 }
               />
             </div>
@@ -164,7 +168,12 @@ export default function Home() {
                 max={4}
                 value={qtr}
                 onChange={(e) =>
-                  setQtr(Math.min(4, Math.max(1, parseInt(e.target.value || "1", 10))))
+                  setQtr(
+                    Math.min(
+                      4,
+                      Math.max(1, parseInt(e.target.value || "1", 10))
+                    )
+                  )
                 }
               />
             </div>
@@ -257,8 +266,18 @@ export default function Home() {
               <div className="prediction-title">
                 Prediction: <span>{predLabel}</span>
               </div>
-              <div>Pass probability: <strong>{(prediction.prob_pass * 100).toFixed(1)}%</strong></div>
-              <div>Run probability: <strong>{(prediction.prob_run * 100).toFixed(1)}%</strong></div>
+              <div>
+                Pass probability:{" "}
+                <strong>
+                  {(prediction.prob_pass * 100).toFixed(1)}%
+                </strong>
+              </div>
+              <div>
+                Run probability:{" "}
+                <strong>
+                  {(prediction.prob_run * 100).toFixed(1)}%
+                </strong>
+              </div>
             </div>
           )}
         </div>
