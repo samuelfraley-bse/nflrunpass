@@ -1,5 +1,3 @@
-For your code itself, the logical order of modules in this project is something like:
-
 config.py – settings / paths / constants
 
 data_loading.py – read raw data into a DataFrame
