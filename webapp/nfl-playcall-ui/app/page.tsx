@@ -5,6 +5,7 @@ import Scoreboard from "@/components/Scoreboard";
 import VerticalField from "@/components/VerticalField";
 
 
+
 type PredictionResponse = {
   prediction: string;
   prob_pass: number;
@@ -111,31 +112,15 @@ export default function Home() {
         <div className="left-column">
           <h2 className="section-title">Game situation</h2>
 
-          {/* Scoreboard */}
-          <Scoreboard offScore={offScore} defScore={defScore} />
+{/* Scoreboard with +/- controls */}
+<Scoreboard
+  offScore={offScore}
+  defScore={defScore}
+  onChangeOff={setOffScore}
+  onChangeDef={setDefScore}
+/>
 
-          <div className="score-input-row">
-            <div className="field-group">
-              <label>Offense score</label>
-              <input
-                type="number"
-                min={0}
-                value={offScore}
-                onChange={(e) => setOffScore(parseInt(e.target.value || "0", 10))}
-              />
-            </div>
-            <div className="field-group">
-              <label>Defense score</label>
-              <input
-                type="number"
-                min={0}
-                value={defScore}
-                onChange={(e) => setDefScore(parseInt(e.target.value || "0", 10))}
-              />
-            </div>
-          </div>
-
-          <hr className="divider" />
+<hr className="divider" />
 
           {/* Down & distance */}
           <h3 className="subheading">Down &amp; distance</h3>
