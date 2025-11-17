@@ -4,6 +4,7 @@ import json
 import joblib
 import pandas as pd
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware  # 👈 add this
 from pydantic import BaseModel
 
 # Paths
@@ -11,6 +12,20 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MODELS_DIR = PROJECT_ROOT / "models"
 
 app = FastAPI(title="NFL Play Call API")
+
+# 👇 add this block right after creating `app`
+origins = [
+    "https://nfl-playcaller.vercel.app",  # your Vercel frontend
+    "http://localhost:3000",              # local dev
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,        # or ["*"] during testing if you want
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ---- Load artifacts once at startup ----
 model = joblib.load(MODELS_DIR / "log_reg_model.pkl")
@@ -30,6 +45,7 @@ class PlayRequest(BaseModel):
     shotgun: bool
     no_huddle: bool
     is_home_offense: bool
+
 
 
 def build_feature_df(req: PlayRequest) -> pd.DataFrame:
