@@ -108,7 +108,7 @@ const handlePredict = async () => {
     <main className="page">
       <header className="page-header">
         <h1>🏈 NFL Play Call Predictor</h1>
-        <p>Pre-snap run vs pass prediction from 2021–2023 play-by-play.</p>
+        <p>Use machine learning to predict run-pass probability, trained on 2021-2023 data & pre-snap indicators.</p>
       </header>
 
       <section className="layout">
