@@ -1,1 +1,3 @@
-st
+git checkout main          # or 'master' or whatever your main branch is
+git pull                   # get the latest changes
+git checkout -b dev 
