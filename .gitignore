@@ -1,9 +1,12 @@
 # Large / generated assets
-data/
 gifs/
+*.csv
+sample_plaus
 
 # Python / notebooks
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
 artifacts/
+
+data/raw/*.csv
