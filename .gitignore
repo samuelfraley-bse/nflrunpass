@@ -1,5 +1,5 @@
 # Large / generated assets
-data/
+.csv
 gifs/
 
 # Python / notebooks
