@@ -9,10 +9,16 @@ __pycache__/
 .ipynb_checkpoints/
 artifacts/
 
-.pkl
+*.pkl
+
+models/*.pkl
+models/*.json
 
 data/raw/*.csv
 
 # Python cache
 __pycache__/
 *.pyc
+
+
+.DS_Store
