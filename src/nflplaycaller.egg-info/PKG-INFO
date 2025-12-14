@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: nflplaycaller
+Version: 0.1.0
+Summary: Add your description here
+Author: Your Name
+Author-email: you@example.com
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi>=0.121.2
+Requires-Dist: joblib>=1.5.2
+Requires-Dist: matplotlib>=3.10.7
+Requires-Dist: numpy>=2.3.4
+Requires-Dist: pandas>=2.3.3
+Requires-Dist: scikit-learn>=1.7.2
+Requires-Dist: streamlit>=1.51.0
+Requires-Dist: uvicorn>=0.38.0
+Dynamic: author
+Dynamic: author-email
+Dynamic: requires-python
