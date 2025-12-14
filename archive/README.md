@@ -60,6 +60,7 @@ The library follows a modular pipeline design:
    - Model hyperparameters
    - Train/test split settings
 
+<<<<<<< HEAD
 2. **`data_loading.py`** - Data ingestion
    - `load_raw_data()` - Read CSV
    - `filter_season()` - Filter to 2023 season
@@ -433,3 +434,6 @@ curl -X POST "http://localhost:8000/predict" \
 ---
 
 **Questions?** Open an issue or reach out to the team on [your communication channel].
+=======
+tuning.py – hyperparameter search
+>>>>>>> e525230c1773bea32f6614b4a3767009b6838793
