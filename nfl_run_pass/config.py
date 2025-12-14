@@ -23,7 +23,7 @@ from typing import Dict, List, Tuple, Any
 from pathlib import Path
 
 # repo root = two levels up from this file: src/nfl_run_pass/config.py
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 @dataclass
 class PathsConfig:
