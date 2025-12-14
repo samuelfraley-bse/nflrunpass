@@ -12,3 +12,7 @@ artifacts/
 .pkl
 
 data/raw/*.csv
+
+# Python cache
+__pycache__/
+*.pyc
