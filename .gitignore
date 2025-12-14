@@ -12,7 +12,6 @@ artifacts/
 *.pkl
 
 models/*.pkl
-models/*.json
 
 data/raw/*.csv
 
