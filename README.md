@@ -30,7 +30,6 @@ nflrunpass/
 ├── api/                       # FastAPI backend
 │   └── main.py                # REST API for predictions
 ├── streamlit/                 # Frontend applications
-│   ├── st_app.py              # Main predictor UI
 │   └── streamlit_app.py       # Alternative UI
 ├── models/                    # Saved artifacts
 │   ├── log_reg_model.pkl      # Trained model
