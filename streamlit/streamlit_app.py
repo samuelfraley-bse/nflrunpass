@@ -1,12 +1,13 @@
-from pathlib import Path
 import json
+from pathlib import Path
+
 import joblib
-import pandas as pd                 # <-- missing
-import streamlit as st
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle, Circle  # <-- missing
+import pandas as pd  # <-- missing
+from matplotlib.patches import Circle, Rectangle  # <-- missing
 
 import streamlit as st
+
 st.set_page_config(
     page_title="NFL Play Call Predictor",
     layout="wide",
@@ -64,6 +65,7 @@ st.markdown(
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MODELS_DIR = PROJECT_ROOT / "models"
 
+
 @st.cache_resource
 def load_artifacts():
     model_path = MODELS_DIR / "log_reg_model.pkl"
@@ -115,7 +117,9 @@ def draw_field(yardline_100: float):
     # Yard numbers
     for x in range(10, 50, 10):
         ax.text(x, 1.3, str(x), color="white", ha="center", va="center", fontsize=7)
-        ax.text(100 - x, 1.3, str(x), color="white", ha="center", va="center", fontsize=7)
+        ax.text(
+            100 - x, 1.3, str(x), color="white", ha="center", va="center", fontsize=7
+        )
 
     ax.text(5, 5, "OWN", color="white", ha="center", va="center", fontsize=7)
     ax.text(95, 5, "OPP", color="white", ha="center", va="center", fontsize=7)
@@ -276,7 +280,6 @@ with left_col:
     down = min(max(down, 1), 4)  # clamp 1–4
     ydstogo = max(parse_int(ydstogo_text, 1), 1)
 
-
     # --- Clock & context (text for quarter + game clock) ---
     st.markdown("**Clock & context**")
     cc_cols = st.columns(2)
@@ -295,7 +298,7 @@ with left_col:
     with form_cols[2]:
         is_home_offense = st.checkbox("Offense is home", value=True)
 
- # --- Field position ---
+    # --- Field position ---
     st.markdown("**Field position**")
 
     ui_pos = st.slider(
@@ -344,16 +347,15 @@ with right_col:
         st.markdown(
             f"""
             <div class="prediction-card">
-                <div style="font-size:1.1rem; font-weight:700; margin-bottom:0.25rem;">
+                <div style="font-size:1.1rem; font-weight:700; margin-bottom:0.25rem; color: #1a1a2e;">
                     Prediction: {pred_label}
                 </div>
-                <div>Pass probability: <strong>{prob_pass:.1%}</strong></div>
-                <div>Run probability: <strong>{prob_run:.1%}</strong></div>
+                <div style="color: #1a1a2e;">Pass probability: <strong>{prob_pass:.1%}</strong></div>
+                <div style="color: #1a1a2e;">Run probability: <strong>{prob_run:.1%}</strong></div>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        st.markdown("")  # small spacer
         ...
     else:
         st.markdown(
