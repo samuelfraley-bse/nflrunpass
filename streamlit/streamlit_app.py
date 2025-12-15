@@ -356,7 +356,7 @@ with right_col:
             """,
             unsafe_allow_html=True,
         )
-        ...
+
     else:
         st.markdown(
             """
