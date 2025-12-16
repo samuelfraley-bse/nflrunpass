@@ -111,6 +111,38 @@ def build_feature_df(req: PlayRequest) -> pd.DataFrame:
         "is_fourth_qtr": 1 if req.qtr == 4 else 0,
         "late_half": 1 if req.seconds_remaining_half < 120 else 0,
         "is_home_offense": int(req.is_home_offense),
+        
+        # Short yardage
+        "fourth_and_one": 1 if (req.down == 4 and req.ydstogo == 1) else 0,
+        "fourth_and_two": 1 if (req.down == 4 and req.ydstogo == 2) else 0,
+        "fourth_and_three": 1 if (req.down == 4 and req.ydstogo == 3) else 0,
+        "third_and_one": 1 if (req.down == 3 and req.ydstogo == 1) else 0,
+        "third_and_two": 1 if (req.down == 3 and req.ydstogo == 2) else 0,
+        "third_and_three": 1 if (req.down == 3 and req.ydstogo == 3) else 0,
+        
+        # Goal line
+        "goal_line_short": 1 if (req.yardline_100 <= 3 and req.ydstogo <= 3) else 0,
+        "goal_line_one_yard": 1 if (req.yardline_100 == 1 and req.ydstogo == 1) else 0,
+        
+        # 2-minute drill (context-aware)
+        "two_minute_drill": 1 if (req.seconds_remaining_half <= 120 and req.seconds_remaining_half > 0 and score_diff <= 3) else 0,
+        "two_minute_drill_trailing": 1 if (req.seconds_remaining_half <= 120 and req.seconds_remaining_half > 0 and score_diff < 0) else 0,
+        "final_minute": 1 if (req.seconds_remaining_half <= 60 and req.seconds_remaining_half > 0 and abs(score_diff) <= 8) else 0,
+        "two_minute_and_long": 1 if (req.seconds_remaining_half <= 120 and req.seconds_remaining_half > 0 and req.ydstogo >= 7 and score_diff <= 3) else 0,
+        
+        # Score context
+        "trailing_multi_score": 1 if score_diff <= -9 else 0,
+        "leading_late_game": 1 if (score_diff >= 3 and req.seconds_remaining_half <= 300 and req.qtr == 4) else 0,
+        "blowout_lead_late": 1 if (score_diff >= 14 and req.seconds_remaining_half <= 300 and req.qtr == 4) else 0,
+        "close_game_fourth_qtr": 1 if (abs(score_diff) <= 3 and req.qtr == 4) else 0,
+        
+        # Down × distance
+        "down_x_ydstogo": req.down * req.ydstogo,
+        "third_or_fourth_and_long": 1 if (req.down in [3, 4] and req.ydstogo >= 10) else 0,
+        "first_and_ten": 1 if (req.down == 1 and req.ydstogo == 10) else 0,
+        
+        # Advanced
+        "score_time_pressure": score_diff * (1 - min(req.seconds_remaining_half / 1800, 1)),
     }
 
     df = pd.DataFrame([data])
