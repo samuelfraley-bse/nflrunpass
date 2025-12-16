@@ -7,7 +7,7 @@ Machine learning model to predict run vs pass plays in NFL games based on pre-sn
 This project implements a binary classification model that predicts whether an NFL offensive play will be a run or pass based on 18 pre-snap features. The model uses logistic regression with hyperparameter tuning via GridSearchCV.
 
 ### Key Features
-- 18 engineered pre-snap features (field position, down/distance, score state, time, formation)
+- 50+ engineered pre-snap features (field position, down/distance, score state, time, formation)
 - Logistic regression with GridSearchCV hyperparameter optimization
 - FastAPI backend for real-time predictions
 - Streamlit UI for interactive predictions
@@ -103,7 +103,7 @@ python run_pipeline.py
 
 This will:
 - Load and filter 2023 season data
-- Engineer 18 pre-snap features
+- Engineer 50+ pre-snap features
 - Split train/test (80/20, stratified)
 - Scale features with StandardScaler
 - Train logistic regression with GridSearchCV
@@ -130,33 +130,28 @@ pytest tests/ -v
 
 ## Model Details
 
-### Features (18 total)
+### Features (50+ total)
 
-**Base numeric (4):**
-- down (1-4)
-- ydstogo (yards to first down)
-- yardline_100 (distance to opponent end zone)
-- game_seconds_remaining (time left in half)
+**Base numeric (3):**
+- down, ydstogo, yardline_100
 
-**Engineered binary (14):**
-- Field position: is_red_zone, is_goal_to_go
-- Distance buckets: short_ydstogo (≤3), medium_ydstogo (4-7), long_ydstogo (≥8)
-- Formation: shotgun, no_huddle
-- Score state: is_trailing, is_tied, is_leading, score_differential
-- Time: is_fourth_qtr, late_half (<2 min)
-- Home/away: is_home_offense
+**Engineered features (47+):**
+- **Field Position:** red zone, goal line, distance buckets (short/medium/long)
+- **Formation:** shotgun, no_huddle
+- **Score State:** trailing/tied/leading, multi-score deficit, blowout situations
+- **Time Context:** quarter flags, 2-minute drill (context-aware), late-game scenarios
+- **Short Yardage:** 3rd & 1/2/3, 4th & 1/2/3
+- **Down × Distance:** interaction terms, long yardage flags
+- **Advanced:** score × time pressure, home/away
 
 ### Model Architecture
-- **Algorithm:** Logistic Regression
-- **Preprocessing:** StandardScaler on all features
-- **Hyperparameter Tuning:** GridSearchCV
+- **Algorithm:** Logistic Regression with L2 regularization
+- **Preprocessing:** StandardScaler, stratified 80/20 split
+- **Hyperparameter Tuning:** GridSearchCV (3-fold CV, F1 scoring)
   - C: [0.01, 0.1, 1.0, 10.0]
   - class_weight: [None, "balanced"]
-  - Scoring: F1
-  - CV folds: 3
 
 ### Performance
-- Train accuracy: 70.7%
 - Test accuracy: 70.1%
 - Test F1: 0.764
 - Test ROC-AUC: 0.745
