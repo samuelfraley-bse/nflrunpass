@@ -1,12 +1,5 @@
 """
-Central configuration for the nfl_run_pass library.
-
-This file is the single source of truth for:
-- data paths and basic filtering
-- target / label configuration
-- feature engineering choices
-- model training and hyperparameter settings
-- where to save trained artifacts
+Updated config with context-aware time features and blowout logic
 """
 
 from __future__ import annotations
@@ -16,13 +9,6 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Any
 
 
-# --------------------------------------------------------------------
-# Paths & data configuration
-# --------------------------------------------------------------------
-
-from pathlib import Path
-
-# repo root = two levels up from this file: src/nfl_run_pass/config.py
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 @dataclass
@@ -31,72 +17,85 @@ class PathsConfig:
     artifacts_dir: Path = REPO_ROOT / "artifacts"
 
 
-
 @dataclass
 class DataConfig:
     """Configuration related to raw data and basic run/pass filtering."""
-
-    # Only use this season in the model (as in the notebook: season == 2023)
     season: int = 2023
-
-    # Column with play type labels ("run", "pass", etc.)
     play_type_col: str = "play_type"
-
-    # Values that should be interpreted as pass/run for df_model
     pass_values: Tuple[str, ...] = ("pass",)
     run_values: Tuple[str, ...] = ("run",)
-
-    # Target column we create in df_model
     target_col: str = "is_pass"
-
-    # Optional: columns you often look at when debugging
     preview_cols: Tuple[str, ...] = (
-        "season",
-        "week",
-        "game_id",
-        "play_id",
-        "play_type",
-        "down",
-        "ydstogo",
+        "season", "week", "game_id", "play_id", "play_type",
+        "down", "ydstogo",
     )
-
-
-# --------------------------------------------------------------------
-# Feature configuration
-# --------------------------------------------------------------------
 
 
 @dataclass
 class FeatureConfig:
-    """Configuration for feature engineering."""
+    """Feature configuration with context-aware time features."""
 
-    # Base numeric columns used directly (pre-snap).
     base_numeric_candidates: Tuple[str, ...] = (
         "down",
         "ydstogo",
         "yardline_100",
-        "game_seconds_remaining",
     )
 
-    # Engineered pre-snap features you create in features.py
     engineered_feature_candidates: Tuple[str, ...] = (
+        # --- Field position ---
         "is_red_zone",
         "is_goal_to_go",
         "short_ydstogo",
         "medium_ydstogo",
         "long_ydstogo",
+        
+        # --- Formation ---
         "shotgun",
         "no_huddle",
-        "score_differential",
+        
+        # --- Score state ---
         "is_trailing",
         "is_tied",
         "is_leading",
+        
+        # --- Time ---
         "is_fourth_qtr",
         "late_half",
+        
+        # --- Other ---
         "is_home_offense",
+        
+        # --- SHORT YARDAGE ---
+        "fourth_and_one",
+        "fourth_and_two",
+        "fourth_and_three",
+        "third_and_one",
+        "third_and_two",
+        "third_and_three",
+        
+        # --- Goal line ---
+        "goal_line_short",
+        "goal_line_one_yard",
+        
+        # --- 2-MINUTE DRILL (now context-aware!) ---
+        "two_minute_drill",              # Only if losing/tied/close
+        "two_minute_drill_trailing",     # Only if actually losing
+        "final_minute",                  # Only if within 8 points
+        "two_minute_and_long",          # Long yardage in 2-min drill
+        
+        # --- Score CONTEXT ---
+        "trailing_multi_score",          # Down 9+
+        "leading_late_game",            # Up 3+ with <5 min
+        "blowout_lead_late",            # ✅ NEW: Up 14+ with <5 min = HEAVY RUN
+        "close_game_fourth_qtr",        # Within 3 in Q4
+        "score_time_pressure",          # Continuous interaction
+        
+        # --- Down × distance ---
+        "down_x_ydstogo",
+        "third_or_fourth_and_long",
+        "first_and_ten",
     )
 
-    # Raw columns needed to compute those engineered features
     required_raw_cols: Tuple[str, ...] = (
         "yardline_100",
         "goal_to_go",
@@ -113,28 +112,18 @@ class FeatureConfig:
     )
 
 
-# --------------------------------------------------------------------
-# Model & training configuration
-# --------------------------------------------------------------------
-
-
 @dataclass
 class TrainTestConfig:
     """Train/test split and related settings."""
-
     test_size: float = 0.2
     random_state: int = 42
-    stratify: bool = True  # stratify by y (run vs pass)
+    stratify: bool = True
 
 
 @dataclass
 class LogisticRegressionConfig:
     """Hyperparameters for logistic regression and its tuning."""
-
-    # Base model args
     max_iter: int = 1000
-
-    # GridSearchCV configuration
     use_grid_search: bool = True
     param_grid: Dict[str, List[Any]] = field(
         default_factory=lambda: {
@@ -148,29 +137,17 @@ class LogisticRegressionConfig:
     verbose: int = 1
 
 
-# --------------------------------------------------------------------
-# Artifact saving configuration
-# --------------------------------------------------------------------
-
-
 @dataclass
 class ArtifactConfig:
     """Filenames for saved artifacts."""
-
     model_filename: str = "log_reg_model.pkl"
     scaler_filename: str = "scaler.pkl"
     feature_cols_filename: str = "feature_cols.json"
 
 
-# --------------------------------------------------------------------
-# Top-level config object
-# --------------------------------------------------------------------
-
-
 @dataclass
 class Config:
     """Bundle all configuration sections together."""
-
     paths: PathsConfig = field(default_factory=PathsConfig)
     data: DataConfig = field(default_factory=DataConfig)
     features: FeatureConfig = field(default_factory=FeatureConfig)
@@ -179,5 +156,4 @@ class Config:
     artifacts: ArtifactConfig = field(default_factory=ArtifactConfig)
 
 
-# ✅ Global, importable config instance
 CONFIG = Config()

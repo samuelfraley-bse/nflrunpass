@@ -1,10 +1,12 @@
 """
-Feature engineering utilities for the NFL run/pass model.
+FIXED features.py - 2-minute drill is CONTEXT AWARE
 
-This module:
-- Creates pre-snap engineered features (red zone, goal-to-go, etc.)
-- Selects the final set of feature columns based on CONFIG
-- Returns a clean feature matrix X and target vector y
+KEY FIXES:
+1. two_minute_drill_ONLY_IF_TRAILING (not when leading by 21!)
+2. final_minute_ONLY_IF_CLOSE (not when game is decided!)
+3. Stronger leading_late_game signal
+
+The model was treating "under 2 min" as urgency regardless of score.
 """
 
 from __future__ import annotations
@@ -15,11 +17,6 @@ import numpy as np
 import pandas as pd
 
 from .config import CONFIG
-
-
-# ---------------------------------------------------------------------
-# Internal helpers
-# ---------------------------------------------------------------------
 
 
 def _ensure_required_columns(df: pd.DataFrame, required_cols: Tuple[str, ...]) -> None:
@@ -34,101 +31,152 @@ def _ensure_required_columns(df: pd.DataFrame, required_cols: Tuple[str, ...]) -
         )
 
 
-# ---------------------------------------------------------------------
-# Core feature engineering
-# ---------------------------------------------------------------------
-
-
 def add_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Add pre-snap engineered features to the dataframe.
-
-    This mirrors (in library form) the transformations from your
-    "New Cell 3 (no leakage)" Kaggle cell. All features are derived
-    from information available *before* the snap.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input dataframe containing at least the columns specified in
-        CONFIG.features.required_raw_cols.
-
-    Returns
-    -------
-    df_feat : pd.DataFrame
-        Dataframe with engineered feature columns added.
+    Add pre-snap engineered features with CONTEXT-AWARE time features.
     """
     _ensure_required_columns(df, CONFIG.features.required_raw_cols)
 
     df = df.copy()
 
-    # --- Field position / scoring context --------------------------------
+    # =======================================================================
+    # BASIC FEATURES
+    # =======================================================================
 
-    # Red zone: inside opponent 20-yard line
     df["is_red_zone"] = (df["yardline_100"] <= 20).astype(int)
-
-    # Goal-to-go situations (already a column in nflfastR-style data)
-    # goal_to_go is usually 1/0 or True/False
     df["is_goal_to_go"] = df["goal_to_go"].astype(int)
-
-    # Yards-to-go buckets: short / medium / long
+    
     df["short_ydstogo"] = (df["ydstogo"] <= 3).astype(int)
     df["medium_ydstogo"] = ((df["ydstogo"] > 3) & (df["ydstogo"] <= 7)).astype(int)
     df["long_ydstogo"] = (df["ydstogo"] > 7).astype(int)
 
-    # --- Formation / tempo ------------------------------------------------
-
-    # shotgun and no_huddle are typically already 0/1 or True/False
-    # We keep them as 0/1 integers for the model
     df["shotgun"] = df["shotgun"].fillna(0).astype(int)
     df["no_huddle"] = df["no_huddle"].fillna(0).astype(int)
-
-    # --- Score state ------------------------------------------------------
-
-    # score_differential is usually offense_score - defense_score
-    # (already present in nflfastR). We keep it numeric and also
-    # derive categorical score state indicators.
-    df["score_differential"] = df["score_differential"].fillna(0)
 
     df["is_trailing"] = (df["score_differential"] < 0).astype(int)
     df["is_tied"] = (df["score_differential"] == 0).astype(int)
     df["is_leading"] = (df["score_differential"] > 0).astype(int)
 
-    # --- Time context -----------------------------------------------------
-
-    # Fourth quarter flag
     df["is_fourth_qtr"] = (df["qtr"] == 4).astype(int)
-
-    # "Late half" indicator: under 2 minutes left in the half
     df["late_half"] = (df["half_seconds_remaining"] <= 120).astype(int)
-
-    # --- Home/away offense ------------------------------------------------
-
-    # Whether the offensive team is the home team
     df["is_home_offense"] = (df["posteam"] == df["home_team"]).astype(int)
+
+    # =======================================================================
+    # SHORT YARDAGE (highest priority)
+    # =======================================================================
+
+    df["fourth_and_one"] = ((df["down"] == 4) & (df["ydstogo"] == 1)).astype(int)
+    df["fourth_and_two"] = ((df["down"] == 4) & (df["ydstogo"] == 2)).astype(int)
+    df["fourth_and_three"] = ((df["down"] == 4) & (df["ydstogo"] == 3)).astype(int)
+    df["third_and_one"] = ((df["down"] == 3) & (df["ydstogo"] == 1)).astype(int)
+    df["third_and_two"] = ((df["down"] == 3) & (df["ydstogo"] == 2)).astype(int)
+    df["third_and_three"] = ((df["down"] == 3) & (df["ydstogo"] == 3)).astype(int)
+
+    # =======================================================================
+    # GOAL LINE
+    # =======================================================================
+    
+    df["goal_line_short"] = (
+        (df["yardline_100"] <= 3) & (df["ydstogo"] <= 3)
+    ).astype(int)
+    
+    df["goal_line_one_yard"] = (
+        (df["yardline_100"] == 1) & (df["ydstogo"] == 1)
+    ).astype(int)
+
+    # =======================================================================
+    # 2-MINUTE DRILL - NOW CONTEXT AWARE!
+    # =======================================================================
+    
+    # Basic 2-minute indicator (for all teams)
+    under_two_minutes = (df["half_seconds_remaining"] <= 120) & (df["half_seconds_remaining"] > 0)
+    under_one_minute = (df["half_seconds_remaining"] <= 60) & (df["half_seconds_remaining"] > 0)
+    
+    # ✅ FIX: Only count as "2-minute drill" if you're losing or tied!
+    # If you're winning big, it's clock management, not a drill
+    df["two_minute_drill"] = (
+        under_two_minutes & 
+        (df["score_differential"] <= 3)  # Only if losing or close
+    ).astype(int)
+    
+    # ✅ FIX: Trailing-specific 2-minute drill
+    df["two_minute_drill_trailing"] = (
+        under_two_minutes & 
+        (df["score_differential"] < 0)  # Actually losing
+    ).astype(int)
+    
+    # ✅ FIX: Final minute only matters in close games
+    df["final_minute"] = (
+        under_one_minute & 
+        (abs(df["score_differential"]) <= 8)  # Within one score
+    ).astype(int)
+    
+    # ✅ NEW: 2-minute drill + long yardage (pass situation)
+    df["two_minute_and_long"] = (
+        under_two_minutes & 
+        (df["ydstogo"] >= 7) &
+        (df["score_differential"] <= 3)  # Only if close
+    ).astype(int)
+
+    # =======================================================================
+    # SCORE CONTEXT
+    # =======================================================================
+    
+    # Trailing by multiple scores
+    df["trailing_multi_score"] = (df["score_differential"] <= -9).astype(int)
+    
+    # ✅ STRENGTHEN: Leading late = kill clock (STRONG RUN signal)
+    df["leading_late_game"] = (
+        (df["score_differential"] >= 3) &  # Lowered threshold from 7
+        (df["game_seconds_remaining"] <= 300) &
+        (df["qtr"] == 4)
+    ).astype(int)
+    
+    # ✅ NEW: Massive lead late = DEFINITELY run
+    df["blowout_lead_late"] = (
+        (df["score_differential"] >= 14) &
+        (df["game_seconds_remaining"] <= 300) &
+        (df["qtr"] == 4)
+    ).astype(int)
+    
+    # Close game in 4th
+    df["close_game_fourth_qtr"] = (
+        (abs(df["score_differential"]) <= 3) &
+        (df["qtr"] == 4)
+    ).astype(int)
+
+    # =======================================================================
+    # DOWN × DISTANCE
+    # =======================================================================
+    
+    df["down_x_ydstogo"] = df["down"] * df["ydstogo"]
+    
+    df["third_or_fourth_and_long"] = (
+        (df["down"].isin([3, 4])) & (df["ydstogo"] >= 10)
+    ).astype(int)
+    
+    df["first_and_ten"] = (
+        (df["down"] == 1) & (df["ydstogo"] == 10)
+    ).astype(int)
+
+    # =======================================================================
+    # SCORE × TIME INTERACTION
+    # =======================================================================
+    
+    # This captures urgency properly:
+    # - Leading late (positive × low time) = NEGATIVE contribution = RUN
+    # - Trailing late (negative × low time) = POSITIVE contribution = PASS
+    time_remaining_pct = np.clip(df["game_seconds_remaining"] / 3600, 0, 1)
+    df["score_time_pressure"] = df["score_differential"] * (1 - time_remaining_pct)
 
     return df
 
 
-# ---------------------------------------------------------------------
-# Feature matrix construction
-# ---------------------------------------------------------------------
-
-
 def get_feature_columns() -> List[str]:
-    """
-    Get the final list of feature columns to use for modeling,
-    based on CONFIG.
-
-    Returns
-    -------
-    feature_cols : list of str
-        Column names that should be used as features.
-    """
+    """Get the final list of feature columns to use for modeling."""
     base = list(CONFIG.features.base_numeric_candidates)
     engineered = list(CONFIG.features.engineered_feature_candidates)
 
-    # Ensure uniqueness and preserve order (base first, then engineered)
     feature_cols: List[str] = []
     for col in base + engineered:
         if col not in feature_cols:
@@ -141,50 +189,23 @@ def build_feature_matrix(
     df: pd.DataFrame,
     target_col: str | None = None,
 ) -> Tuple[pd.DataFrame, pd.Series, List[str]]:
-    """
-    Given a dataframe with raw columns, add engineered features and
-    construct the (X, y) pair for modeling.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input dataframe produced by data_loading.load_and_prepare_run_pass_data().
-        Must contain the target column and all required raw columns.
-    target_col : str, optional
-        Name of the target column. If None, defaults to CONFIG.data.target_col.
-
-    Returns
-    -------
-    X : pd.DataFrame
-        Feature matrix with columns as returned by get_feature_columns().
-    y : pd.Series
-        Target vector (0/1 indicating run/pass).
-    feature_cols : list of str
-        The list of feature column names used in X (for saving later).
-    """
+    """Build feature matrix for modeling."""
     if target_col is None:
         target_col = CONFIG.data.target_col
 
     if target_col not in df.columns:
-        raise KeyError(
-            f"Target column '{target_col}' not found in dataframe. "
-            "Make sure you ran add_is_pass_target / load_and_prepare_run_pass_data "
-            "before building features."
-        )
+        raise KeyError(f"Target column '{target_col}' not found in dataframe.")
 
-    # 1) Add engineered features
+    # Add engineered features
     df_feat = add_engineered_features(df)
 
-    # 2) Select feature columns
+    # Select feature columns
     feature_cols = get_feature_columns()
 
     missing_feats = [c for c in feature_cols if c not in df_feat.columns]
     if missing_feats:
         raise KeyError(
-            "The following configured feature columns are missing after "
-            "feature engineering: "
-            f"{missing_feats}. Either adjust CONFIG.features.* or make sure "
-            "add_engineered_features creates them."
+            f"The following configured feature columns are missing: {missing_feats}"
         )
 
     X = df_feat[feature_cols].copy()
