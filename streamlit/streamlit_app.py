@@ -552,7 +552,7 @@ with right_col:
             <div class="prediction-card {card_class}">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                     <div style="font-size: 1.8rem; font-weight: 700;">
-                        {"🏈" if pred_label == "PASS" else "🏃"} {pred_label}
+                        {"ᯓ🏈" if pred_label == "PASS" else "🏃"} {pred_label}
                     </div>
                     <div class="{conf_class}" style="font-size: 0.9rem;">
                         {conf_emoji} {conf_text} confidence
@@ -569,7 +569,7 @@ with right_col:
             <div style="margin: 1rem 0;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem;">
                     <span>🏃 RUN {prob_run:.1%}</span>
-                    <span>PASS {prob_pass:.1%} 🏈</span>
+                    <span>PASS {prob_pass:.1%} ᯓ🏈</span>
                 </div>
                 <div class="prob-bar-container">
                     <div class="prob-bar-pass" style="width: {prob_pass * 100}%;">
