@@ -1,12 +1,10 @@
 """
-FIXED features.py - 2-minute drill is CONTEXT AWARE
+Feature engineering utilities for the NFL run/pass model.
 
-KEY FIXES:
-1. two_minute_drill_ONLY_IF_TRAILING (not when leading by 21!)
-2. final_minute_ONLY_IF_CLOSE (not when game is decided!)
-3. Stronger leading_late_game signal
-
-The model was treating "under 2 min" as urgency regardless of score.
+This module:
+- Creates pre-snap engineered features (red zone, goal-to-go, etc.)
+- Selects the final set of feature columns based on CONFIG
+- Returns a clean feature matrix X and target vector y
 """
 
 from __future__ import annotations
@@ -53,9 +51,12 @@ def add_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
     df["shotgun"] = df["shotgun"].fillna(0).astype(int)
     df["no_huddle"] = df["no_huddle"].fillna(0).astype(int)
 
+    df["score_differential"] = df["score_differential"].fillna(0)
+
     df["is_trailing"] = (df["score_differential"] < 0).astype(int)
     df["is_tied"] = (df["score_differential"] == 0).astype(int)
     df["is_leading"] = (df["score_differential"] > 0).astype(int)
+    
 
     df["is_fourth_qtr"] = (df["qtr"] == 4).astype(int)
     df["late_half"] = (df["half_seconds_remaining"] <= 120).astype(int)
