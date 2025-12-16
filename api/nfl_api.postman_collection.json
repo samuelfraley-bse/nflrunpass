@@ -1,0 +1,143 @@
+{
+  "info": {
+    "name": "NFL Play Call Prediction API",
+    "description": "Collection for testing NFL play prediction endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": [""]
+        }
+      }
+    },
+    {
+      "name": "Detailed Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Get Examples",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/examples",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["examples"]
+        }
+      }
+    },
+    {
+      "name": "Predict - Obvious Pass Situation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"down\": 3,\n  \"ydstogo\": 12,\n  \"yardline_100\": 75,\n  \"offense_score\": 17,\n  \"defense_score\": 24,\n  \"qtr\": 4,\n  \"seconds_remaining_half\": 120,\n  \"shotgun\": true,\n  \"no_huddle\": true,\n  \"is_home_offense\": false\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/predict",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["predict"]
+        }
+      }
+    },
+    {
+      "name": "Predict - Obvious Run Situation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"down\": 1,\n  \"ydstogo\": 10,\n  \"yardline_100\": 65,\n  \"offense_score\": 14,\n  \"defense_score\": 7,\n  \"qtr\": 2,\n  \"seconds_remaining_half\": 600,\n  \"shotgun\": false,\n  \"no_huddle\": false,\n  \"is_home_offense\": true\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/predict",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["predict"]
+        }
+      }
+    },
+    {
+      "name": "Predict - Short Yardage",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"down\": 3,\n  \"ydstogo\": 1,\n  \"yardline_100\": 15,\n  \"offense_score\": 10,\n  \"defense_score\": 10,\n  \"qtr\": 3,\n  \"seconds_remaining_half\": 300,\n  \"shotgun\": false,\n  \"no_huddle\": false,\n  \"is_home_offense\": true\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/predict",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["predict"]
+        }
+      }
+    },
+    {
+      "name": "Predict - Invalid Input (should fail)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"down\": 5,\n  \"ydstogo\": -10,\n  \"yardline_100\": 150,\n  \"offense_score\": 14,\n  \"defense_score\": 17,\n  \"qtr\": 4,\n  \"seconds_remaining_half\": 180,\n  \"shotgun\": true,\n  \"no_huddle\": false,\n  \"is_home_offense\": true\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/predict",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["predict"]
+        }
+      }
+    }
+  ]
+}

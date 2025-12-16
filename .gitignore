@@ -1,23 +1,48 @@
-# Large / generated assets
-gifs/
+# Data files
+data/
 *.csv
-sample_plaus
 
-# Python / notebooks
-__pycache__/
-*.pyc
-.ipynb_checkpoints/
+# Model artifacts
+models/
 artifacts/
-
 *.pkl
 
-models/*.pkl
+# GIFs and media
+gifs/
 
-data/raw/*.csv
-
-# Python cache
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.ipynb_checkpoints/
 
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
 
+# Build artifacts
+*.egg-info/
+build/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# MyPy
+.mypy_cache/
